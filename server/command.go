@@ -73,7 +73,7 @@ func getAutocompleteData() *model.AutocompleteData {
 
 // Send an ephemeralCommandResponse (instead of a post from the bot)
 // to be able to override user image to a green one
-func (p *Plugin) sendHelpResponse(currentCommand string) (*model.CommandResponse, *model.AppError) {
+func (p *Plugin) sendHelpResponse(args *model.CommandArgs, currentCommand string) (*model.CommandResponse, *model.AppError) {
 	message := "CircleCI Plugin help\n"
 
 	switch currentCommand {
@@ -87,17 +87,12 @@ func (p *Plugin) sendHelpResponse(currentCommand string) (*model.CommandResponse
 		message += help
 	}
 
-	return &model.CommandResponse{
-		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Username:     botUserName,
-		IconURL:      p.iconBuildGreenURL,
-		Text:         message,
-	}, nil
+	return p.sendEphemeralResponse(args, message), nil
 }
 
 // Send an ephemeralCommandResponse (instead of a post from the bot)
 // to be able to override user image to a red one
-func (p *Plugin) sendIncorrectSubcommandResponse(currentCommand string) (*model.CommandResponse, *model.AppError) {
+func (p *Plugin) sendIncorrectSubcommandResponse(args *model.CommandArgs, currentCommand string) (*model.CommandResponse, *model.AppError) {
 	message := "Invalid subcommand given. Type `/" + commandTrigger
 
 	if currentCommand != "" {
@@ -106,12 +101,7 @@ func (p *Plugin) sendIncorrectSubcommandResponse(currentCommand string) (*model.
 
 	message += " help` to get a hint"
 
-	return &model.CommandResponse{
-		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Username:     botUserName,
-		IconURL:      p.iconBuildFailURL,
-		Text:         message,
-	}, nil
+	return p.sendEphemeralResponse(args, message), nil
 }
 
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
@@ -140,9 +130,9 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		return p.executeProject(args, token, split[2:])
 
 	case commandHelpTrigger:
-		return p.sendHelpResponse("")
+		return p.sendHelpResponse(args, "")
 
 	default:
-		return p.sendIncorrectSubcommandResponse("")
+		return p.sendIncorrectSubcommandResponse(args, "")
 	}
 }

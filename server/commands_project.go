@@ -34,10 +34,10 @@ func (p *Plugin) executeProject(args *model.CommandArgs, circleciToken string, s
 		return p.executeProjectRecentBuilds(args, circleciToken, split[1:])
 
 	case commandHelpTrigger:
-		return p.sendHelpResponse(projectTrigger)
+		return p.sendHelpResponse(args, projectTrigger)
 
 	default:
-		return p.sendIncorrectSubcommandResponse(projectTrigger)
+		return p.sendIncorrectSubcommandResponse(args, projectTrigger)
 	}
 }
 

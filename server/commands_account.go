@@ -38,10 +38,10 @@ func (p *Plugin) executeAccount(args *model.CommandArgs, circleciToken string, s
 		return p.executeAccountDisconnect(args)
 
 	case commandHelpTrigger:
-		return p.sendHelpResponse(accountTrigger)
+		return p.sendHelpResponse(args, accountTrigger)
 
 	default:
-		return p.sendIncorrectSubcommandResponse(accountTrigger)
+		return p.sendIncorrectSubcommandResponse(args, accountTrigger)
 	}
 }
 

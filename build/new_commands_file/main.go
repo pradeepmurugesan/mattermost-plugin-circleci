@@ -40,10 +40,10 @@ func (p *Plugin) execute%s(args *model.CommandArgs, circleciToken string, split 
 	// TODO: add cases with subcommand triggers here
 
 	case commandHelpTrigger:
-		return p.sendHelpResponse(%sTrigger)
+		return p.sendHelpResponse(args, %sTrigger)
 
 	default:
-		return p.sendIncorrectSubcommandResponse(%sTrigger)
+		return p.sendIncorrectSubcommandResponse(args, %sTrigger)
 	}
 }
 
