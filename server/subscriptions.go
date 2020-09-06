@@ -2,78 +2,18 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"sort"
 
-	"github.com/google/go-github/github"
 	"github.com/pkg/errors"
 )
 
 const (
-	SubscriptionsKey = "subscriptions"
+	subscriptionsKVKey = "subscriptions"
 )
 
 type Subscriptions struct {
 	Repositories map[string][]*Subscription
-}
-
-func (p *Plugin) Subscribe(ctx context.Context, githubClient *github.Client, userID, owner, repo, channelID, features string, flags SubscriptionFlags) error {
-	// if owner == "" {
-	// 	return errors.Errorf("invalid repository")
-	// }
-
-	// if err := p.checkOrg(owner); err != nil {
-	// 	return errors.Wrap(err, "organization not supported")
-	// }
-
-	// var err error
-
-	// if repo == "" {
-	// 	var ghOrg *github.Organization
-	// 	ghOrg, _, err = githubClient.Organizations.Get(ctx, owner)
-	// 	if ghOrg == nil {
-	// 		var ghUser *github.User
-	// 		ghUser, _, err = githubClient.Users.Get(ctx, owner)
-	// 		if ghUser == nil {
-	// 			return errors.Errorf("Unknown organization %s", owner)
-	// 		}
-	// 	}
-	// } else {
-	// 	var ghRepo *github.Repository
-	// 	ghRepo, _, err = githubClient.Repositories.Get(ctx, owner, repo)
-
-	// 	if ghRepo == nil {
-	// 		return errors.Errorf("unknown repository %s", fullNameFromOwnerAndRepo(owner, repo))
-	// 	}
-	// }
-
-	// if err != nil {
-	// 	p.API.LogWarn("Failed to get repository or org for subscribe action", "error", err.Error())
-	// 	return errors.Errorf("Encountered an error subscribing to %s", fullNameFromOwnerAndRepo(owner, repo))
-	// }
-
-	// sub := &Subscription{
-	// 	ChannelID:  channelID,
-	// 	CreatorID:  userID,
-	// 	Features:   features,
-	// 	Repository: fullNameFromOwnerAndRepo(owner, repo),
-	// 	Flags:      flags,
-	// }
-
-	// if err := p.AddSubscription(fullNameFromOwnerAndRepo(owner, repo), sub); err != nil {
-	// 	return errors.Wrap(err, "could not add subscription")
-	// }
-
-	return nil
-}
-
-func (p *Plugin) SubscribeOrg(ctx context.Context, githubClient *github.Client, userID, org, channelID, features string, flags SubscriptionFlags) error {
-	if org == "" {
-		return errors.New("invalid organization")
-	}
-
-	return p.Subscribe(ctx, githubClient, userID, org, "", channelID, features, flags)
 }
 
 func (p *Plugin) GetSubscriptionsByChannel(channelID string) ([]*Subscription, error) {
@@ -105,7 +45,7 @@ func (p *Plugin) GetSubscriptionsByChannel(channelID string) ([]*Subscription, e
 func (p *Plugin) GetSubscriptions() (*Subscriptions, error) {
 	var subscriptions *Subscriptions
 
-	value, appErr := p.API.KVGet(SubscriptionsKey)
+	value, appErr := p.API.KVGet(subscriptionsKVKey)
 	if appErr != nil {
 		return nil, errors.Wrap(appErr, "could not get subscriptions from KVStore")
 	}
@@ -198,14 +138,14 @@ func (p *Plugin) StoreSubscriptions(s *Subscriptions) error {
 		return errors.Wrap(err, "error while converting subscriptions map to json")
 	}
 
-	if appErr := p.API.KVSet(SubscriptionsKey, b); appErr != nil {
+	if appErr := p.API.KVSet(subscriptionsKVKey, b); appErr != nil {
 		return errors.Wrap(appErr, "could not store subscriptions in KV store")
 	}
 
 	return nil
 }
 
-func (p *Plugin) GetSubscribedChannelsForRepository(repo *github.Repository) []*Subscription {
+func (p *Plugin) GetSubscribedChannelsForRepository(owner, repository string) []*Subscription {
 	// name := repo.GetFullName()
 	// org := strings.Split(name, "/")[0]
 	// subs, err := p.GetSubscriptions()

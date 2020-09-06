@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"strings"
+
+	"github.com/mattermost/mattermost-server/v5/model"
 )
 
 const (
@@ -33,52 +36,18 @@ func (s SubscriptionFlags) String() string {
 type Subscription struct {
 	ChannelID  string
 	CreatorID  string
-	Features   string
 	Flags      SubscriptionFlags
 	Repository string
 }
 
-// func (s *Subscription) Pulls() bool {
-// 	return strings.Contains(s.Features, featurePulls)
-// }
-
-// func (s *Subscription) Issues() bool {
-// 	return strings.Contains(s.Features, featureIssues)
-// }
-
-func (s *Subscription) Pushes() bool {
-	return strings.Contains(s.Features, "pushes")
-}
-
-func (s *Subscription) Creates() bool {
-	return strings.Contains(s.Features, "creates")
-}
-
-func (s *Subscription) Deletes() bool {
-	return strings.Contains(s.Features, "deletes")
-}
-
-func (s *Subscription) IssueComments() bool {
-	return strings.Contains(s.Features, "issue_comments")
-}
-
-func (s *Subscription) PullReviews() bool {
-	return strings.Contains(s.Features, "pull_reviews")
-}
-
-func (s *Subscription) Label() string {
-	if !strings.Contains(s.Features, "label:") {
-		return ""
+func (s *Subscription) ToSlackAttachmentField() *model.SlackAttachmentField {
+	return &model.SlackAttachmentField{
+		Title: s.Repository,
+		Short: true,
+		Value: fmt.Sprintf(
+			"Subscribed by: %s\nFlags: %s",
+			s.CreatorID, // TODO id to username
+			s.Flags.String(),
+		),
 	}
-
-	labelSplit := strings.Split(s.Features, "\"")
-	if len(labelSplit) < 3 {
-		return ""
-	}
-
-	return labelSplit[1]
-}
-
-func (s *Subscription) ExcludeOrgMembers() bool {
-	return s.Flags.onlyFailedBuilds
 }

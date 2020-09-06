@@ -142,6 +142,9 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	case commandHelpTrigger:
 		return p.sendHelpResponse(args, "")
 
+	case subscribeTrigger:
+		return p.executeSubscribe(args, token, split[2:])
+
 	default:
 		return p.sendIncorrectSubcommandResponse(args, "")
 	}

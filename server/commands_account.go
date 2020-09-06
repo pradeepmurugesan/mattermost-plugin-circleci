@@ -9,14 +9,17 @@ import (
 )
 
 const (
-	accountTrigger            = "account"
-	accountHint               = "[subcommand]"
-	accountHelpText           = "Available subcommands: " + accountViewTrigger + ", " + accountConnectTrigger + ", " + accountDisconnectTrigger
-	accountViewTrigger        = "view"
-	AccountViewHelpText       = "Get informations about yourself"
-	accountConnectTrigger     = "connect"
-	accountConnectHint        = "[API token]"
-	accountConnectHelpText    = "Connect your Mattermost account to CircleCI"
+	accountTrigger  = "account"
+	accountHint     = "<" + accountViewTrigger + "|" + accountConnectTrigger + "|" + accountDisconnectTrigger + ">"
+	accountHelpText = "Manage the connection to your CircleCI acccount"
+
+	accountViewTrigger  = "view"
+	AccountViewHelpText = "Get informations about yourself"
+
+	accountConnectTrigger  = "connect"
+	accountConnectHint     = "<API token>"
+	accountConnectHelpText = "Connect your Mattermost account to CircleCI"
+
 	accountDisconnectTrigger  = "disconnect"
 	accountDisconnectHelpText = "Disconnect your Mattermost account from CircleCI"
 )

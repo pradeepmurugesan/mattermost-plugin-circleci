@@ -74,7 +74,6 @@ func httpHandleWebhook(p *Plugin, w http.ResponseWriter, r *http.Request) {
 	post := &model.Post{
 		ChannelId: channelToPost,
 		UserId:    p.botUserID,
-		Message:   "Webhook received",
 	}
 	post.AddProp("attachments", buildInfos.toPostAttachments())
 
