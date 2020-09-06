@@ -31,7 +31,7 @@ const (
 )
 
 func (p *Plugin) execute%s(args *model.CommandArgs, circleciToken string, split []string) (*model.CommandResponse, *model.AppError) {
-	subcommand := "help"
+	subcommand := commandHelpTrigger
 	if len(split) > 0 {
 		subcommand = split[0]
 	}

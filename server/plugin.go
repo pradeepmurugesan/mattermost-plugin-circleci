@@ -14,6 +14,13 @@ const (
 	botDescription = "Created by the CircleCI Plugin"
 )
 
+var (
+	badgeFailedURL string
+	badgePassedURL string
+	buildFailedURL string
+	buildGreenURL  string
+)
+
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
 type Plugin struct {
 	plugin.MattermostPlugin
@@ -26,15 +33,14 @@ type Plugin struct {
 	configuration *configuration
 
 	botUserID string
-
-	badgeFailedURL string
-	badgePassedURL string
 }
 
 func (p *Plugin) OnActivate() error {
 	URLPluginStaticBase := "/plugins/" + manifest.Id + "/public/" // TODO add siteURL ?
-	p.badgeFailedURL = URLPluginStaticBase + "circleci-failed.svg"
-	p.badgePassedURL = URLPluginStaticBase + "circleci-passed.svg"
+	badgeFailedURL = URLPluginStaticBase + "circleci-failed.svg"
+	badgePassedURL = URLPluginStaticBase + "circleci-passed.svg"
+	buildFailedURL = URLPluginStaticBase + "circleci-build-fail.png"
+	buildGreenURL = URLPluginStaticBase + "circleci-build-green.png"
 
 	// Create bot user
 	botUserID, err := p.Helpers.EnsureBot(

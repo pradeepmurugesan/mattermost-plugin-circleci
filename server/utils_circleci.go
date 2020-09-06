@@ -45,10 +45,10 @@ func buildStatusToMarkdown(build *circleci.Build, p *Plugin) string {
 		return "Failing"
 
 	case "failed":
-		return "![Status image](" + p.badgeFailedURL + ")"
+		return "![Status image](" + badgeFailedURL + ")"
 
 	case "success":
-		return "![Status image](" + p.badgePassedURL + ")"
+		return "![Status image](" + badgePassedURL + ")"
 
 	case "on_hold":
 		return "On Hold"

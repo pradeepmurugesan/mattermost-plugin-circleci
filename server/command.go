@@ -45,6 +45,7 @@ func getAutocompleteData() *model.AutocompleteData {
 
 	// Account subcommands
 	account := model.NewAutocompleteData(accountTrigger, accountHint, accountHelpText)
+
 	view := model.NewAutocompleteData(accountViewTrigger, "", AccountViewHelpText)
 	connect := model.NewAutocompleteData(accountConnectTrigger, accountConnectHint, accountConnectHelpText)
 	connect.AddTextArgument("Generate a Personal API Token from your CircleCI user settings", accountConnectHint, "")
@@ -56,18 +57,27 @@ func getAutocompleteData() *model.AutocompleteData {
 
 	// Project management subcommands
 	project := model.NewAutocompleteData(projectTrigger, projectHint, projectHelpText)
+
 	projectList := model.NewAutocompleteData(projectListTrigger, projectListHint, projectListHelpText)
 	projectRecentBuild := model.NewAutocompleteData(projectRecentBuildsTrigger, projectRecentBuildsHint, projectRecentBuildsHelpText)
 	projectRecentBuild.AddTextArgument("Owner of the project's repository", "[username]", "")
 	projectRecentBuild.AddDynamicListArgument("dzeiufuazifhzauefio", routeAutocompleteFollowedProjects, true)
 	projectRecentBuild.AddTextArgument("Branch name", "[branch]", "")
 
-	project.AddCommand(projectList)
 	project.AddCommand(projectRecentBuild)
+	project.AddCommand(projectList)
+
+	// Subscriptions subcommands
+	subscribe := model.NewAutocompleteData(subscribeTrigger, subscribeHint, subscribeHelpText)
+
+	subscribeList := model.NewAutocompleteData(subscribeListTrigger, subscribeListHint, subscribeListHelpText)
+
+	subscribe.AddCommand(subscribeList)
 
 	// Add all subcommands
 	mainCommand.AddCommand(account)
 	mainCommand.AddCommand(project)
+	mainCommand.AddCommand(subscribe)
 	return mainCommand
 }
 
