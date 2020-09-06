@@ -52,8 +52,6 @@ Please fill a [Github Issue](https://github.com/nathanaelhoun/mattermost-plugin-
 
 Pull Requests are welcome! You can contact me on the [Mattermost Community ~plugin-circleci channel](https://community.mattermost.com/core/channels/plugin-circleci) where I am `@nathanaelhoun`.
 
-This plugin use the [new Mattermost Plugin API](https://github.com/mattermost/mattermost-plugin-api) from the Hackathon project, organized by services
-
 ## Development
 
 To avoid having to manually install your plugin, build and deploy your plugin using one of the following options.
@@ -82,7 +80,6 @@ Apache License.
 
 ## Thanks to
 
--   **[@jszwedko](https://github.com/jszwedko)** p.iconCircleciURL = URLPluginStaticBase + botIconFile
-    for his [CircleCI Go API](https://github.com/jszwedko/go-circleci)
+-   **[@jszwedko](https://github.com/jszwedko)** for his [CircleCI Go API](https://github.com/jszwedko/go-circleci)
 -   Another [CircleCI Plugin](https://github.com/chetanyakan/mattermost-plugin-circleci) by **[@chetanyakan](https://github.com/chetanyakan)**
 -   [Mattermost](https://mattermost.org) for providing a good software and having a great community
