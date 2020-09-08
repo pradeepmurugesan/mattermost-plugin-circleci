@@ -106,7 +106,8 @@ func TestPlugin_GetSubscriptionsByChannel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.plugin.GetSubscriptionsByChannel(tt.args.channelID)
+			subs, err := tt.plugin.getSubscriptionsKV()
+			got := subs.GetSubscriptionsByChannel(tt.args.channelID)
 
 			CheckError(t, tt.wantErr, err)
 

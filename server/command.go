@@ -66,7 +66,7 @@ func getAutocompleteData() *model.AutocompleteData {
 	projectList := model.NewAutocompleteData(projectListTrigger, projectListHint, projectListHelpText)
 	projectRecentBuild := model.NewAutocompleteData(projectRecentBuildsTrigger, projectRecentBuildsHint, projectRecentBuildsHelpText)
 	projectRecentBuild.AddTextArgument("Owner of the project's repository", "[username]", "")
-	projectRecentBuild.AddDynamicListArgument("dzeiufuazifhzauefio", routeAutocompleteFollowedProjects, true)
+	projectRecentBuild.AddDynamicListArgument("", routeAutocompleteFollowedProjects, true)
 	projectRecentBuild.AddTextArgument("Branch name", "[branch]", "")
 
 	project.AddCommand(projectRecentBuild)
@@ -77,9 +77,16 @@ func getAutocompleteData() *model.AutocompleteData {
 
 	subscribeList := model.NewAutocompleteData(subscribeListTrigger, subscribeListHint, subscribeListHelpText)
 	subscribeChannel := model.NewAutocompleteData(subscribeChannelTrigger, subscribeChannelHint, subscribeChannelHelpText)
+	subscribeChannel.AddTextArgument("Owner of the project's repository", "[owner]", "")
+	subscribeChannel.AddDynamicListArgument("", routeAutocompleteFollowedProjects, true)
+	subscribeChannel.AddNamedTextArgument(flagOnlyFailedBuilds, "Only receive notifications for failed builds", "[write anything here]", "", false)
+	unsubscribeChannel := model.NewAutocompleteData(unsubscribeChannelTrigger, unsubscribeChannelHint, unsubscribeChannelHelpText)
+	unsubscribeChannel.AddTextArgument("Owner of the project's repository", "[owner]", "") // TODO make dynamic autocomplete list
+	unsubscribeChannel.AddTextArgument("Repository name", "[repository]", "")              // TODO make dynamic autocomplete list
 
 	subscribe.AddCommand(subscribeList)
 	subscribe.AddCommand(subscribeChannel)
+	subscribe.AddCommand(unsubscribeChannel)
 
 	// Add all subcommands
 	mainCommand.AddCommand(account)
@@ -180,7 +187,7 @@ func getTokenIfConnected(p *Plugin, split []string, userID string) (string, bool
 		return "", false
 	}
 
-	circleToken, exists := p.getTokenFromKVStore(userID)
+	circleToken, exists := p.getTokenKV(userID)
 	if !exists {
 		return "", true
 	}

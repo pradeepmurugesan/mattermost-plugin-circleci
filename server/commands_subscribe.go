@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/mattermost/mattermost-server/v5/model"
 )
 
@@ -9,16 +12,17 @@ const (
 	subscribeHint     = "<" + subscribeListTrigger + "|" + subscribeChannelTrigger + ">"
 	subscribeHelpText = "Manage your subscriptions"
 
-	// TODO:  add subcommands Triggers, Hints and HelpTexts here
 	subscribeListTrigger  = "list"
 	subscribeListHint     = ""
 	subscribeListHelpText = "List the CircleCI subscriptions for the current channel"
 
-	subscribeChannelTrigger  = "channel"
+	subscribeChannelTrigger  = "add-channel"
 	subscribeChannelHint     = "<username> <repository> [--flags]"
 	subscribeChannelHelpText = "Subscribe the current channel to CircleCI notifications for a repository"
 
-	// TODO: add theses subCommands in getAutocompleteData()
+	unsubscribeChannelTrigger  = "remove-channel"
+	unsubscribeChannelHint     = "<username> <repository> [--flags]"
+	unsubscribeChannelHelpText = "Unsubscribe the current channel to CircleCI notifications for a repository"
 )
 
 func (p *Plugin) executeSubscribe(context *model.CommandArgs, circleciToken string, split []string) (*model.CommandResponse, *model.AppError) {
@@ -37,22 +41,126 @@ func (p *Plugin) executeSubscribe(context *model.CommandArgs, circleciToken stri
 	case subscribeChannelTrigger:
 		return executeSubscribeChannel(p, context, split[1:])
 
+	case unsubscribeChannelTrigger:
+		return executeUnsubscribeChannel(p, context, split[1:])
+
 	default:
 		return p.sendIncorrectSubcommandResponse(context, subscribeTrigger)
 	}
 }
 
 func executeSubscribeList(p *Plugin, context *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-	// TODO
-	return nil, nil
+	allSubs, err := p.getSubscriptionsKV()
+	if err != nil {
+		p.API.LogError("Unable to get subscriptions", "err", err)
+		return p.sendEphemeralResponse(context, "Internal error when getting subscriptions"), nil
+	}
+
+	subs := allSubs.GetSubscriptionsByChannel(context.ChannelId)
+	if subs == nil {
+		return p.sendEphemeralResponse(
+			context,
+			fmt.Sprintf(
+				"This channel is not subscribed to any repository. Try `/%s %s %s`",
+				commandTrigger,
+				subscribeTrigger,
+				subscribeChannelTrigger,
+			),
+		), nil
+	}
+
+	attachment := model.SlackAttachment{
+		Title:    "Repositories this channel is subscribed to :",
+		Fallback: "List of repositories this channel is subscribed to",
+	}
+
+	for _, sub := range subs {
+		p.API.LogDebug("Parsing CircleCI subscription", "sub", sub)
+		attachment.Fields = append(attachment.Fields, sub.ToSlackAttachmentField(p))
+	}
+
+	p.sendEphemeralPost(context, "", []*model.SlackAttachment{&attachment})
+	return &model.CommandResponse{}, nil
 }
 
-func executeSubscribeChannel(p *Plugin, context *model.CommandArgs, args []string) (*model.CommandResponse, *model.AppError) {
-	// TODO
+func executeSubscribeChannel(p *Plugin, context *model.CommandArgs, split []string) (*model.CommandResponse, *model.AppError) {
+	if len(split) < 2 {
+		return p.sendEphemeralResponse(context, "Please provide the project owner and repository names)"), nil
+	}
 
-	// if err := p.AddSubscription(fullNameFromOwnerAndRepo(owner, repo), sub); err != nil {
-	// 	return errors.Wrap(err, "could not add subscription")
-	// }
+	owner, repo := split[0], split[1]
 
-	return p.sendEphemeralResponse(context, "Successfully subscribed to TODO tell channel name"), nil
+	// ? TODO check that project exists
+
+	subs, err := p.getSubscriptionsKV()
+	if err != nil {
+		p.API.LogError("Unable to get subscriptions", "err", err)
+		return p.sendEphemeralResponse(context, "Internal error when getting subscriptions"), nil
+	}
+
+	newSub := &Subscription{
+		ChannelID:  context.ChannelId,
+		CreatorID:  context.UserId,
+		Owner:      owner,
+		Repository: repo,
+		Flags:      SubscriptionFlags{},
+	}
+
+	for _, arg := range split[2:] {
+		if strings.HasPrefix(arg, "--") {
+			flag := arg[2:]
+			err := newSub.Flags.AddFlag(flag)
+			if err != nil {
+				return p.sendEphemeralResponse(context, fmt.Sprintf(
+					"Unknown subscription flag `%s`. Try `/%s %s %s`",
+					arg,
+					commandTrigger,
+					subscribeTrigger,
+					commandHelpTrigger,
+				)), nil
+			}
+		}
+	}
+
+	p.API.LogDebug("Adding a new subscription", "subscription", newSub)
+	subs.AddSubscription(newSub)
+
+	if err := p.storeSubscriptionsKV(subs); err != nil {
+		p.API.LogError("Unable to store subscriptions", "error", err)
+		return p.sendEphemeralResponse(context, "Internal error when storing new subscription."), nil
+	}
+
+	// TODO add message "add the orb, here is the docs for doing it"
+	return p.sendEphemeralResponse(context, fmt.Sprintf(
+		"Successfully subscribed this channel to notifications from **%s**",
+		getFullNameFromOwnerAndRepo(owner, repo),
+	)), nil
+}
+
+func executeUnsubscribeChannel(p *Plugin, context *model.CommandArgs, split []string) (*model.CommandResponse, *model.AppError) {
+	if len(split) < 2 {
+		return p.sendEphemeralResponse(context, "Please provide the project owner and repository names)"), nil
+	}
+
+	owner, repo := split[0], split[1]
+
+	subs, err := p.getSubscriptionsKV()
+	if err != nil {
+		p.API.LogError("Unable to get subscriptions", "err", err)
+		return p.sendEphemeralResponse(context, "Internal error when getting subscriptions"), nil
+	}
+
+	if removed := subs.RemoveSubscription(context.ChannelId, owner, repo); !removed {
+		return p.sendEphemeralResponse(context, fmt.Sprintf("This channel is not subscribed to **%s**", getFullNameFromOwnerAndRepo(owner, repo))), nil
+	}
+
+	if err := p.storeSubscriptionsKV(subs); err != nil {
+		p.API.LogError("Unable to store subscriptions", "error", err)
+		return p.sendEphemeralResponse(context, "Internal error when storing new subscription."), nil
+	}
+
+	return p.sendEphemeralResponse(context, fmt.Sprintf(
+		"Successfully unsubscribed this channel to notifications from **%s**",
+		getFullNameFromOwnerAndRepo(owner, repo),
+	)), nil
 }

@@ -99,7 +99,7 @@ func (p *Plugin) executeAccountConnect(args *model.CommandArgs, split []string) 
 		return p.sendEphemeralResponse(args, "Please tell me your token. If you don't have a CircleCI Personal API Token, you can get one from your [Account Dashboard](https://circleci.com/account/api)"), nil
 	}
 
-	if token, exists := p.getTokenFromKVStore(args.UserId); exists {
+	if token, exists := p.getTokenKV(args.UserId); exists {
 		user, ok := p.getCircleUserInfo(token)
 		if !ok {
 			return p.sendEphemeralResponse(args, "Internal error when reaching CircleCI"), nil
@@ -119,7 +119,7 @@ func (p *Plugin) executeAccountConnect(args *model.CommandArgs, split []string) 
 		return p.sendEphemeralResponse(args, "Can't connect to CircleCI. Please check that your user API token is valid"), nil
 	}
 
-	if ok := p.storeTokenInKVStore(args.UserId, circleciToken); !ok {
+	if ok := p.storeTokenKV(args.UserId, circleciToken); !ok {
 		return p.sendEphemeralResponse(args, "Internal error when storing your token"), nil
 	}
 
@@ -127,7 +127,7 @@ func (p *Plugin) executeAccountConnect(args *model.CommandArgs, split []string) 
 }
 
 func (p *Plugin) executeAccountDisconnect(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-	if ok := p.deleteTokenFromKVStore(args.UserId); !ok {
+	if ok := p.deleteTokenKV(args.UserId); !ok {
 		return p.sendEphemeralResponse(args, errorConnectionText), nil
 	}
 
