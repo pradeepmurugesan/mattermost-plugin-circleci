@@ -8,21 +8,28 @@ import (
 )
 
 const (
-	subscribeTrigger  = "subscription"
-	subscribeHint     = "<" + subscribeListTrigger + "|" + subscribeChannelTrigger + ">"
+	subscribeTrigger = "subscription"
+	subscribeHint    = "<" + subscribeListTrigger + "|" +
+		subscribeChannelTrigger + "|" +
+		subscribeUnsubscribeChannelTrigger + "|" +
+		subscribeListAllChannelsTrigger + ">"
 	subscribeHelpText = "Manage your subscriptions"
 
 	subscribeListTrigger  = "list"
 	subscribeListHint     = ""
 	subscribeListHelpText = "List the CircleCI subscriptions for the current channel"
 
-	subscribeChannelTrigger  = "add-channel"
+	subscribeChannelTrigger  = "subscribe-channel"
 	subscribeChannelHint     = "<username> <repository> [--flags]"
 	subscribeChannelHelpText = "Subscribe the current channel to CircleCI notifications for a repository"
 
-	unsubscribeChannelTrigger  = "remove-channel"
-	unsubscribeChannelHint     = "<username> <repository> [--flags]"
-	unsubscribeChannelHelpText = "Unsubscribe the current channel to CircleCI notifications for a repository"
+	subscribeUnsubscribeChannelTrigger  = "unsubscribe-channel"
+	subscribeUnsubscribeChannelHint     = "<username> <repository> [--flags]"
+	subscribeUnsubscribeChannelHelpText = "Unsubscribe the current channel to CircleCI notifications for a repository"
+
+	subscribeListAllChannelsTrigger  = "list-channels"
+	subscribeListAllChannelsHint     = "<username> <repository>"
+	subscribeListAllChannelsHelpText = "List all channels subscribed to this repository in the current team"
 )
 
 func (p *Plugin) executeSubscribe(context *model.CommandArgs, circleciToken string, split []string) (*model.CommandResponse, *model.AppError) {
@@ -41,8 +48,11 @@ func (p *Plugin) executeSubscribe(context *model.CommandArgs, circleciToken stri
 	case subscribeChannelTrigger:
 		return executeSubscribeChannel(p, context, split[1:])
 
-	case unsubscribeChannelTrigger:
+	case subscribeUnsubscribeChannelTrigger:
 		return executeUnsubscribeChannel(p, context, split[1:])
+
+	case subscribeListAllChannelsTrigger:
+		return executeSubscribeListAllChannels(p, context, split[1:])
 
 	default:
 		return p.sendIncorrectSubcommandResponse(context, subscribeTrigger)
@@ -163,4 +173,43 @@ func executeUnsubscribeChannel(p *Plugin, context *model.CommandArgs, split []st
 		"Successfully unsubscribed this channel to notifications from **%s**",
 		getFullNameFromOwnerAndRepo(owner, repo),
 	)), nil
+}
+
+func executeSubscribeListAllChannels(p *Plugin, context *model.CommandArgs, split []string) (*model.CommandResponse, *model.AppError) {
+	if len(split) < 2 {
+		return p.sendEphemeralResponse(context, "Please provide the project owner and repository names)"), nil
+	}
+
+	owner, repo := split[0], split[1]
+
+	allSubs, err := p.getSubscriptionsKV()
+	if err != nil {
+		p.API.LogError("Unable to get subscriptions", "err", err)
+		return p.sendEphemeralResponse(context, "Internal error when getting subscriptions"), nil
+	}
+
+	channelIDs := allSubs.GetSubscribedChannelsForRepository(owner, repo)
+	if channelIDs == nil {
+		return p.sendEphemeralResponse(
+			context,
+			fmt.Sprintf(
+				"No channel is subscribed to this repository. Try `/%s %s %s`",
+				commandTrigger,
+				subscribeTrigger,
+				subscribeChannelTrigger,
+			),
+		), nil
+	}
+
+	message := "Channels of this team subscribed to **" + getFullNameFromOwnerAndRepo(owner, repo) + "**\n"
+	for _, channelID := range channelIDs {
+		channel, appErr := p.API.GetChannel(channelID)
+		if appErr != nil {
+			p.API.LogError("Unable to get channel", "channelID", channelID)
+		}
+
+		message += fmt.Sprintf("- ~%s\n", channel.Name)
+	}
+
+	return p.sendEphemeralResponse(context, message), nil
 }
