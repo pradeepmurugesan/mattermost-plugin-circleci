@@ -15,10 +15,10 @@ const (
 )
 
 var (
-	badgeFailedURL string
-	badgePassedURL string
-	buildFailedURL string
-	buildGreenURL  string
+	badgeFailedURL     string
+	badgePassedURL     string
+	buildFailedIconURL string
+	buildGreenIconURL  string
 )
 
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
@@ -39,8 +39,8 @@ func (p *Plugin) OnActivate() error {
 	URLPluginStaticBase := "/plugins/" + manifest.Id + "/public/" // TODO add siteURL ?
 	badgeFailedURL = URLPluginStaticBase + "circleci-failed.svg"
 	badgePassedURL = URLPluginStaticBase + "circleci-passed.svg"
-	buildFailedURL = URLPluginStaticBase + "circleci-build-fail.png"
-	buildGreenURL = URLPluginStaticBase + "circleci-build-green.png"
+	buildFailedIconURL = URLPluginStaticBase + "circleci-build-fail.png"
+	buildGreenIconURL = URLPluginStaticBase + "circleci-build-green.png"
 
 	// Create bot user
 	botUserID, err := p.Helpers.EnsureBot(

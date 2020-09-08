@@ -10,48 +10,53 @@ import (
 )
 
 type BuildInfos struct {
-	CircleProjectReponame string `json:"CircleProjectReponame"`
-	CircleBuildNum        int    `json:"CircleBuildNum"`
+	Owner          string `json:"Owner"`
+	Repository     string `json:"Repository"`
+	CircleBuildNum int    `json:"CircleBuildNum"`
+	Failed         bool   `json:"Failed"`
+	Message        string `json:"Message"`
 }
 
 // Convert the build info into a post attachment
 func (bi *BuildInfos) toPostAttachments() []*model.SlackAttachment {
-	const (
-		circleStatusFailed = "failed"
-	)
-
 	attachment := &model.SlackAttachment{
 		AuthorName: "CircleCI Integration",
-		AuthorLink: "TODO URL TO BUILD FAILED",
+		// TODO link to build 				AuthorLink: "",
 		Fields: []*model.SlackAttachmentField{
 			{
 				Title: "Repo",
 				Short: true,
-				Value: bi.CircleProjectReponame,
+				Value: getFullNameFromOwnerAndRepo(bi.Owner, bi.Repository),
 			},
 			{
-				Title: "Build number",
+				Title: "Job number",
 				Short: true,
 				Value: fmt.Sprintf("%d", bi.CircleBuildNum),
 			},
 		},
 	}
 
-	buildStatus := "success" // TODO handle this attribute correctly
+	if bi.Message != "" {
+		attachment.Fields = append(attachment.Fields,
+			&model.SlackAttachmentField{
+				Title: "Message",
+				Short: false,
+				Value: fmt.Sprintf("```\n%s\n```", bi.Message),
+			},
+		)
+	}
 
-	if buildStatus == circleStatusFailed {
-		attachment.AuthorIcon = buildFailedURL
-		attachment.Title = "TODO BUild failed"
-
-		// TODO attachment.Color = red
+	if bi.Failed {
+		attachment.AuthorIcon = buildFailedIconURL
+		attachment.Title = "Job failed"
+		attachment.Color = "#FF1919" // red
 	} else {
-		attachment.AuthorIcon = buildGreenURL
-		attachment.Title = "TODO BUild passed"
-		// TODO attachment.Color = green
+		attachment.AuthorIcon = buildGreenIconURL
+		attachment.Title = "Job passed"
+		attachment.Color = "#50F100" // green
 	}
 
 	attachment.Fallback = attachment.Title
-
 	return []*model.SlackAttachment{
 		attachment,
 	}
@@ -69,16 +74,29 @@ func httpHandleWebhook(p *Plugin, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	channelToPost := "jyswqqfas3bk7db3eg3m1cy9xh" // TODO get the good channel
-
-	post := &model.Post{
-		ChannelId: channelToPost,
-		UserId:    p.botUserID,
+	allSubs, err := p.getSubscriptionsKV()
+	if err != nil {
+		p.API.LogError("Unable to get subscriptions", "err", err)
+		return
 	}
-	post.AddProp("attachments", buildInfos.toPostAttachments())
 
-	_, appErr := p.API.CreatePost(post)
-	if appErr != nil {
-		p.API.LogError("Failed to create Post", "appError", appErr)
+	channelsToPost := allSubs.GetSubscribedChannelsForRepository(buildInfos.Owner, buildInfos.Repository)
+	if channelsToPost == nil {
+		p.API.LogWarn("Received webhooks without any subscriptions", "webhook", buildInfos)
+	}
+
+	postWithoutChannel := &model.Post{
+		UserId: p.botUserID,
+	}
+	postWithoutChannel.AddProp("attachments", buildInfos.toPostAttachments())
+
+	for _, channel := range channelsToPost {
+		post := postWithoutChannel.Clone()
+		post.ChannelId = channel
+
+		_, appErr := p.API.CreatePost(post)
+		if appErr != nil {
+			p.API.LogError("Failed to create Post", "appError", appErr)
+		}
 	}
 }
