@@ -19,9 +19,8 @@ type BuildInfos struct {
 
 // Convert the build info into a post attachment
 func (bi *BuildInfos) toPostAttachments() []*model.SlackAttachment {
+	// TODO add link to build
 	attachment := &model.SlackAttachment{
-		AuthorName: "CircleCI Integration",
-		// TODO link to build 				AuthorLink: "",
 		Fields: []*model.SlackAttachmentField{
 			{
 				Title: "Repo",
@@ -47,11 +46,11 @@ func (bi *BuildInfos) toPostAttachments() []*model.SlackAttachment {
 	}
 
 	if bi.Failed {
-		attachment.AuthorIcon = buildFailedIconURL
+		attachment.ThumbURL = buildFailedIconURL
 		attachment.Title = "Job failed"
 		attachment.Color = "#FF1919" // red
 	} else {
-		attachment.AuthorIcon = buildGreenIconURL
+		attachment.ThumbURL = buildGreenIconURL
 		attachment.Title = "Job passed"
 		attachment.Color = "#50F100" // green
 	}
