@@ -49,8 +49,9 @@ func (p *Plugin) executeAccount(args *model.CommandArgs, circleciToken string, s
 }
 
 func (p *Plugin) executeAccountView(args *model.CommandArgs, token string) (*model.CommandResponse, *model.AppError) {
-	user, ok := p.getCircleCIUserInfo(token)
+	user, ok := p.getCircleUserInfo(token)
 	if !ok {
+		p.API.LogInfo("Unable to get CircleCI info", "MM UserID", args.UserId)
 		return p.sendEphemeralResponse(args, errorConnectionText), nil
 	}
 
@@ -99,7 +100,7 @@ func (p *Plugin) executeAccountConnect(args *model.CommandArgs, split []string) 
 	}
 
 	if token, exists := p.getTokenFromKVStore(args.UserId); exists {
-		user, ok := p.getCircleCIUserInfo(token)
+		user, ok := p.getCircleUserInfo(token)
 		if !ok {
 			return p.sendEphemeralResponse(args, "Internal error when reaching CircleCI"), nil
 		}

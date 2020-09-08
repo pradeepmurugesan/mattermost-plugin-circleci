@@ -10,7 +10,7 @@ import (
 
 const (
 	projectTrigger  = "project"
-	projectHint     = "<" + projectListTrigger + "|" + projectListTrigger + ">"
+	projectHint     = "<" + projectListTrigger + "|" + projectRecentBuildsTrigger + ">"
 	projectHelpText = "View informations about your CircleCI projects"
 
 	projectListTrigger  = "list-followed"
