@@ -59,7 +59,7 @@ func (s *Subscription) ToSlackAttachmentField(p *Plugin) *model.SlackAttachmentF
 		Title: getFullNameFromOwnerAndRepo(s.Owner, s.Repository),
 		Short: true,
 		Value: fmt.Sprintf(
-			"Subscribed by: @%s\nFlags: `%s`",
+			"Subscribed by: @%s\nFlags: ` %s`",
 			username,
 			s.Flags.String(),
 		),

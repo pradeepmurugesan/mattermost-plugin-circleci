@@ -19,11 +19,11 @@ const (
 	subscribeListHint     = ""
 	subscribeListHelpText = "List the CircleCI subscriptions for the current channel"
 
-	subscribeChannelTrigger  = "subscribe-channel"
+	subscribeChannelTrigger  = "subscribe"
 	subscribeChannelHint     = "<username> <repository> [--flags]"
 	subscribeChannelHelpText = "Subscribe the current channel to CircleCI notifications for a repository"
 
-	subscribeUnsubscribeChannelTrigger  = "unsubscribe-channel"
+	subscribeUnsubscribeChannelTrigger  = "unsubscribe"
 	subscribeUnsubscribeChannelHint     = "<username> <repository> [--flags]"
 	subscribeUnsubscribeChannelHelpText = "Unsubscribe the current channel to CircleCI notifications for a repository"
 
